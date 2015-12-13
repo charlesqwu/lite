@@ -5,19 +5,21 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 DROP TABLE IF EXISTS `channel`;
 CREATE TABLE `channel` (
-  `channel_id` int(11) NOT NULL AUTO_INCREMENT,
+  `channel_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `channel` varchar(80) NOT NULL,
   `products_api` varchar(256) NOT NULL,
+  `get_product_api` varchar(256) NOT NULL,
+  `update_product_api` varchar(256) NOT NULL,
   PRIMARY KEY (`channel_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `channel` (`channel_id`, `channel`, `products_api`) VALUES
-(1,	'Shopify',	'https://{API_KEY}:{API_PASSWORD}@{STORE_NAME}.myshopify.com/admin/products.json?fields=id,title,variants'),
-(11,	'Vend',	'https://{STORE_NAME}.vendhq.com/api/products?access_token={ACCESS_TOKEN}');
+INSERT INTO `channel` (`channel_id`, `channel`, `products_api`, `get_product_api`, `update_product_api`) VALUES
+(1,	'Shopify',	'https://{API_KEY}:{API_PASSWORD}@{STORE_NAME}.myshopify.com/admin/products.json?fields=id,title,variants',	'',	''),
+(11,	'Vend',	'https://{STORE_NAME}.vendhq.com/api/products?access_token={ACCESS_TOKEN}',	'',	'');
 
 DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product` (
-  `product_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `product_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(80) DEFAULT NULL,
   `created` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -39,7 +41,11 @@ CREATE TABLE `store` (
   `api_key` varchar(256) DEFAULT NULL,
   `api_password` varchar(256) DEFAULT NULL,
   `access_token` varchar(256) DEFAULT NULL,
-  PRIMARY KEY (`store_id`)
+  PRIMARY KEY (`store_id`),
+  KEY `vendor_id` (`vendor_id`),
+  KEY `channel_id` (`channel_id`),
+  CONSTRAINT `store_ibfk_1` FOREIGN KEY (`vendor_id`) REFERENCES `vendor` (`vendor_id`),
+  CONSTRAINT `store_ibfk_2` FOREIGN KEY (`channel_id`) REFERENCES `channel` (`channel_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `store` (`store_id`, `vendor_id`, `channel_id`, `store_name`, `api_key`, `api_password`, `access_token`) VALUES
@@ -58,7 +64,11 @@ CREATE TABLE `variant` (
   `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`variant_id`),
-  UNIQUE KEY `sku_store_id` (`sku`,`store_id`)
+  UNIQUE KEY `sku_store_id` (`sku`,`store_id`),
+  KEY `product_id` (`product_id`),
+  KEY `store_id` (`store_id`),
+  CONSTRAINT `variant_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+  CONSTRAINT `variant_ibfk_2` FOREIGN KEY (`store_id`) REFERENCES `store` (`store_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `variant` (`variant_id`, `product_id`, `store_id`, `title`, `sku`, `price`, `qty`, `created`, `updated`) VALUES
@@ -81,4 +91,5 @@ CREATE TABLE `vendor` (
   PRIMARY KEY (`vendor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `vendor` (`vendor_id`, `vendor`) VALUES (1,	'charlesqwu');
+INSERT INTO `vendor` (`vendor_id`, `vendor`) VALUES
+(1,	'charlesqwu');
